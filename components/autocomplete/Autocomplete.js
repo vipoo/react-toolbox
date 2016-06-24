@@ -6,12 +6,14 @@ import { AUTOCOMPLETE } from '../identifiers.js';
 import InjectChip from '../chip/Chip.js';
 import InjectInput from '../input/Input.js';
 import events from '../utils/events.js';
+import wu from 'wu-babel';
 
 const POSITION = {
   AUTO: 'auto',
   DOWN: 'down',
   UP: 'up'
 };
+
 
 const factory = (Chip, Input) => {
   class Autocomplete extends Component {
@@ -21,6 +23,7 @@ const factory = (Chip, Input) => {
      disabled: PropTypes.bool,
      error: PropTypes.string,
      label: PropTypes.string,
+     limit: PropTypes.number,
      multiple: PropTypes.bool,
      onChange: PropTypes.func,
      selectedPosition: PropTypes.oneOf(['above', 'below']),
@@ -49,7 +52,8 @@ const factory = (Chip, Input) => {
      multiple: true,
      showSuggestionsWhenValueIsSet: false,
      source: {},
-     suggestionMatch: 'start'
+     suggestionMatch: 'start',
+     limit: 1000
    };
 
    state = {
@@ -59,7 +63,12 @@ const factory = (Chip, Input) => {
      query: this.query(this.props.value)
    };
 
+   componentWillMount () {
+     this.source = this.calculateSource(this.props);
+   }
+
    componentWillReceiveProps (nextProps) {
+    this.source = this.calculateSource(nextProps);
      if (!this.props.multiple) {
        this.setState({
          query: this.query(nextProps.value)
@@ -150,37 +159,29 @@ const factory = (Chip, Input) => {
    }
 
    query (key) {
-     return !this.props.multiple && key ? this.source().get(key) : '';
+     return !this.props.multiple && key ? this.source.find(([k]) => key === k)[1] : '';
    }
 
    suggestions () {
-     let suggest = new Map();
      const query = this.state.query.toLowerCase().trim() || '';
      const values = this.values();
-     const source = this.source();
+     const source = this.source;
 
      // Suggest any non-set value which matches the query
      if (this.props.multiple) {
-       for (const [key, value] of source) {
-         if (!values.has(key) && this.matches(value.toLowerCase().trim(), query)) {
-           suggest.set(key, value);
-         }
-       }
-
-     // When multiple is false, suggest any value which matches the query if showAllSuggestions is false
-     } else if (query && !this.state.showAllSuggestions) {
-       for (const [key, value] of source) {
-         if (this.matches(value.toLowerCase().trim(), query)) {
-           suggest.set(key, value);
-         }
-       }
-
-     // When multiple is false, suggest all values when showAllSuggestions is true
-     } else {
-       suggest = source;
+      return wu(source)
+              .filter(([k, v]) => values.has(k) && this.matches(v.toLowerCase().trim(), query));
      }
 
-     return suggest;
+     // When multiple is false, suggest any value which matches the query if showAllSuggestions is false
+     if (query && !this.state.showAllSuggestions) {
+      return wu(source)
+                .filter(kv => this.matches(kv[1].toLowerCase().trim(), query))
+                .take(this.props.limit);
+     }
+
+     // When multiple is false, suggest all values when showAllSuggestions is true
+     return wu(source).take(this.props.limit);
    }
 
    matches (value, query) {
@@ -198,19 +199,21 @@ const factory = (Chip, Input) => {
      return false;
    }
 
-   source () {
-     const { source: src } = this.props;
+   calculateSource (props) {
+     const { source: src } = props;
      if (src.hasOwnProperty('length')) {
-       return new Map(src.map((item) => Array.isArray(item) ? [...item] : [item, item]));
+       const sourceArray = item => Array.isArray(item) ? item : [item, item];
+
+       return src.map(sourceArray);
      } else {
-       return new Map(Object.keys(src).map((key) => [key, src[key]]));
+       return Object.keys(src).map((key) => [key, src[key]]);
      }
    }
 
    values () {
      const valueMap = new Map();
      const vals = this.props.multiple ? this.props.value : [this.props.value];
-     for (const [k, v] of this.source()) {
+     for (const [k, v] of this.source) {
        if (vals.indexOf(k) !== -1) valueMap.set(k, v);
      }
      return valueMap;
