@@ -7,7 +7,6 @@ module.exports = function (config) {
     singleRun: true,
     frameworks: ['mocha'],
     files: [
-      './node_modules/phantomjs-polyfill/bind-polyfill.js',
       './node_modules/babel-polyfill/dist/polyfill.js',
       'tests.webpack.js'
     ],
