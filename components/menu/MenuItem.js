@@ -4,6 +4,7 @@ import { themr } from 'react-css-themr';
 import { MENU } from '../identifiers.js';
 import FontIcon from '../font_icon/FontIcon.js';
 import rippleFactory from '../ripple/Ripple.js';
+import {cleanProps} from '../utils';
 
 const factory = (ripple) => {
   class MenuItem extends Component {
@@ -48,8 +49,10 @@ const factory = (ripple) => {
         [theme.disabled]: disabled
       }, this.props.className);
 
+      const cleanedProps = cleanProps(others);
+
       return (
-        <li {...others} data-react-toolbox='menu-item' className={className} onClick={this.handleClick}>
+        <li {...cleanedProps} data-react-toolbox='menu-item' className={className} onClick={this.handleClick}>
           {icon ? <FontIcon value={icon} className={theme.icon}/> : null}
           <span className={theme.caption}>{caption}</span>
           {shortcut ? <small className={theme.shortcut}>{shortcut}</small> : null}

@@ -3,6 +3,7 @@ import classnames from 'classnames';
 import { themr } from 'react-css-themr';
 import { INPUT } from '../identifiers.js';
 import InjectedFontIcon from '../font_icon/FontIcon.js';
+import {cleanProps} from '../utils';
 
 const factory = (FontIcon) => {
   class Input extends React.Component {
@@ -117,8 +118,10 @@ const factory = (FontIcon) => {
         && value !== ''
         && !(typeof value === Number && isNaN(value));
 
+      const cleanedProps = cleanProps(others);
+
       const InputElement = React.createElement(multiline ? 'textarea' : 'input', {
-        ...others,
+        ...cleanedProps,
         className: classnames(theme.inputElement, {[theme.filled]: valuePresent}),
         onChange: this.handleChange,
         ref: 'input',

@@ -4,6 +4,7 @@ import { themr } from 'react-css-themr';
 import { BUTTON } from '../identifiers.js';
 import InjectFontIcon from '../font_icon/FontIcon.js';
 import rippleFactory from '../ripple/Ripple.js';
+import {cleanProps} from '../utils';
 
 const factory = (ripple, FontIcon) => {
   class Button extends Component {
@@ -78,8 +79,10 @@ const factory = (ripple, FontIcon) => {
         [theme.inverse]: inverse
       }, className);
 
+      const cleanedProps = cleanProps(others);
+
       const props = {
-        ...others,
+        ...cleanedProps,
         href,
         ref: 'button',
         className: classes,

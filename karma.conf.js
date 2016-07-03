@@ -8,6 +8,7 @@ module.exports = function (config) {
     frameworks: ['mocha'],
     files: [
       './node_modules/babel-polyfill/dist/polyfill.js',
+      'spec/reactErrors.js',
       'tests.webpack.js'
     ],
     reporters: ['dots'],
